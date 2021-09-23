@@ -40,6 +40,6 @@ define dqx
     x/64gx $arg0
 end
 
-file ./handson5
+file ./handson2
 # gdbserverでデバッグする場合.
 #target remote 172.17.0.2:1234

