@@ -1,0 +1,13 @@
+CC = /usr/bin/gcc
+CFLAGS= -ggdb -O0 -fstack-protector-all
+LFLAGS= -Wl,-z,relro,-z,now
+SRC = handson1.c
+TARGET = handson1
+
+all: 
+	$(CC) $(CFLAGS) -o $(TARGET) $(LFLAGS) $(SRC)
+
+
+.PHONY: 
+clean:
+	rm -rf $(TARGET)
