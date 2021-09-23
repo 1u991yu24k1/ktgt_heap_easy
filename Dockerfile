@@ -45,6 +45,7 @@ RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     
 RUN python3 -m pip install -U pip && \
     python3 -m pip install --no-cache-dir \
+    pwntools \
     z3-solver \
     ropper \
     unicorn \
