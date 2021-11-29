@@ -85,7 +85,6 @@ def delete_note(idx):
 ofs_puts        = 0x06dfd0 # 後で消す. 
 ofs_malloc_hook = 0x3afc30 # 後で消す. 
 ofs_free_hook   = 0x3b18e8 # 後で消す. 
-ofs_system    
 
 banner = 'test'
 HOST, PORT = '127.0.0.1', 1337 

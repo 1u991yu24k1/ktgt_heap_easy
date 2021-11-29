@@ -87,6 +87,7 @@ ofs_malloc_hook = 0x3afc30 # 後で消す.
 ofs_free_hook   = 0x3b18e8 # 後で消す. 
 ofs_system      = 0x041770 # 後で消す. 
 ofs_binsh       = 0x1746fc # 後で消す. 
+ofs_oneshot     = 0x041602
 
 banner = 'test'
 HOST, PORT = '127.0.0.1', 1337 

