@@ -11,6 +11,73 @@
 
 char *ptr_array[MAX_SIZE];
 
+#define N 1024
+#define PROCFS "/proc/%d/maps"
+#define LIBCRT "/lib/x86_64-linux-gnu/libc-2.27.so" // Ubuntu 18.04 LTS(x64)
+#define HEAP   "[heap]"
+
+static unsigned long getlibc(void){
+	unsigned long libc = 0U;
+	char buf[N] = {'\0'};
+	char tmp[0x20u] = {'\0'};
+	FILE *fp = NULL;
+	pid_t pid;
+	pid = getpid();
+	snprintf(tmp, 0x20u, PROCFS, pid);
+	printf("[+] %s\n", tmp);
+	if((fp = fopen(tmp, "r")) == NULL){
+		fprintf(stderr, "[!] Can't Open %s\n", tmp);
+		exit(EXIT_FAILURE);
+	}
+	while(fgets(buf, N, fp) != NULL){
+		memset(tmp, '\0', 0x20u);
+		if(strstr(buf, LIBCRT) != NULL){
+			strncpy(tmp, buf, 12); // 48bit addr(userland)
+			libc = strtoul(tmp, NULL, 0x10u);
+			break;
+		}
+
+	}
+	fclose(fp);
+	return libc;
+}
+
+static unsigned long getheap(void){
+    unsigned long heap_base = 0U;
+	  char buf[N] = {'\0'};
+	  char tmp[0x20u] = {'\0'};
+	  FILE *fp = NULL;
+	  pid_t pid;
+	  pid = getpid();
+	  snprintf(tmp, 0x20u, PROCFS, pid);
+	  printf("[+] %s\n", tmp);
+	  if((fp = fopen(tmp, "r")) == NULL){
+		    fprintf(stderr, "[!] Can't Open %s\n", tmp);
+		    exit(EXIT_FAILURE);
+	  }
+	  while(fgets(buf, N, fp) != NULL){
+		    memset(tmp, '\0', 0x20u);
+		    if(strstr(buf, HEAP) != NULL){
+			      strncpy(tmp, buf, 12); // 48bit addr(userland)
+			      heap_base = strtoul(tmp, NULL, 0x10u);
+			      break;
+		    }
+
+	  }
+	  fclose(fp);
+	  return heap_base;
+}
+
+unsigned long read_ulong(void){
+    unsigned long val = 0ul;
+    char tmp[0x10] = {'\0'};
+    fgets(tmp, 0x10 - 1, stdin);
+    if(1 != sscanf_s(tmp, "%lx", &val)){
+        exit(EXIT_FAILURE);
+    }
+    return val; 
+}
+
 ssize_t read_int(void){
     char buf[8] = {'\0'};
     ssize_t tmp = 0L;
