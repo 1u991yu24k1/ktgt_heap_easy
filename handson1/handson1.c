@@ -72,7 +72,7 @@ unsigned long read_ulong(void){
     unsigned long val = 0ul;
     char tmp[0x10] = {'\0'};
     fgets(tmp, 0x10 - 1, stdin);
-    if(1 != sscanf_s(tmp, "%lx", &val)){
+    if(1 != sscanf(tmp, "%lx", &val)){
         exit(EXIT_FAILURE);
     }
     return val; 
